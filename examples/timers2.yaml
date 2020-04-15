@@ -1,0 +1,42 @@
+programs:
+  - name: timers
+    metrics:
+      counters:
+        - name: timer_start_total
+          help: Timers fired in the kernel
+          table: counts
+          labels:
+            - name: command
+              size: 128
+              decoders:
+              - name: string
+            - name: function
+              size: 8
+              decoders:
+                - name: ksym
+            - name: podinfo
+              size: 8
+              decoders:
+              - name: uint
+              - name: kubepod
+    tracepoints:
+      timer:timer_start: tracepoint__timer__timer_start
+    code: |
+      struct key_t {
+          char command[128];
+          u64 ip;
+          u64 pid;
+      };
+
+      BPF_HASH(counts, struct key_t);
+
+      // Generates function tracepoint__timer__timer_start
+      TRACEPOINT_PROBE(timer, timer_start) {
+          struct key_t key = { 
+              .ip = (u64) args->function,
+              .pid = bpf_get_current_pid_tgid() >> 32,
+          };
+          bpf_get_current_comm(&key.command, sizeof(key.command));
+          counts.increment(key);
+          return 0;
+      }
