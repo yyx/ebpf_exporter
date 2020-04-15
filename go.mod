@@ -1,4 +1,4 @@
-module github.com/cloudflare/ebpf_exporter
+module github.com/yyx/ebpf_exporter
 
 require (
 	github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d // indirect
